@@ -35,7 +35,13 @@ def handle_books():
         return jsonify(new_book), 201
     else:
         # Handle the GET request
-        return jsonify(books)
+        author = request.args.get('author')
+
+        if author:
+            filtered_books = [book for book in books if book.get('author') == author]
+            return jsonify(filtered_books)
+        else:
+            return jsonify(books)
 
 
 def find_book_by_id(book_id):
