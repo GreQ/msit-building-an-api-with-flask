@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask, jsonify, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -5,6 +7,9 @@ from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 limiter = Limiter(app=app, key_func=get_remote_address, headers_enabled=True)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 # Our list of books
 books = [
@@ -29,9 +34,12 @@ def validate_book_data(data):
 @limiter.limit("10/minute")  # Limit to 10 requests per minute
 def handle_books():
     if request.method == 'POST':
+        app.logger.info('POST request received for /api/books')  # Log a message
+
         # Get the new book data from the client
         new_book = request.get_json()
         if not validate_book_data(new_book):
+            app.logger.warning('Invalid book data received: %s', new_book)
             return jsonify({"error": "Invalid book data"}), 400
 
         # Generate a new ID for the book
@@ -40,11 +48,13 @@ def handle_books():
 
         # Add the new book to our list
         books.append(new_book)
+        app.logger.info('Created book with id %s', new_id)
 
         # Return the new book data to the client
         return jsonify(new_book), 201
     else:
         # Handle the GET request
+        app.logger.info('GET request received for /api/books')  # Log a message
         author = request.args.get('author')
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
@@ -73,11 +83,14 @@ def find_book_by_id(book_id):
 
 @app.route('/api/books/<int:id>', methods=['PUT'])
 def handle_book(id):
+    app.logger.info('PUT request received for /api/books/%s', id)
+
     # Find the book with the given ID
     book = find_book_by_id(id)
 
     # If the book wasn't found, return a 404 error
     if book is None:
+        app.logger.warning('Book with id %s not found', id)
         return '', 404
 
     # Update the book with the new data
@@ -90,11 +103,14 @@ def handle_book(id):
 
 @app.route('/api/books/<int:id>', methods=['DELETE'])
 def delete_book(id):
+    app.logger.info('DELETE request received for /api/books/%s', id)
+
     # Find the book with the given ID
     book = find_book_by_id(id)
 
     # If the book wasn't found, return a 404 error
     if book is None:
+        app.logger.warning('Book with id %s not found', id)
         return '', 404
 
     # Remove the book from the list
