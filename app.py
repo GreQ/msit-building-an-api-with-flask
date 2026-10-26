@@ -81,9 +81,9 @@ def find_book_by_id(book_id):
     return None
 
 
-@app.route('/api/books/<int:id>', methods=['PUT'])
+@app.route('/api/books/<int:id>', methods=['GET', 'PUT'])
 def handle_book(id):
-    app.logger.info('PUT request received for /api/books/%s', id)
+    app.logger.info('%s request received for /api/books/%s', request.method, id)
 
     # Find the book with the given ID
     book = find_book_by_id(id)
@@ -92,6 +92,9 @@ def handle_book(id):
     if book is None:
         app.logger.warning('Book with id %s not found', id)
         return '', 404
+
+    if request.method == 'GET':
+        return jsonify(book)
 
     # Update the book with the new data
     new_data = request.get_json()
