@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Local notes
+prompt.md
+steps-done.md
