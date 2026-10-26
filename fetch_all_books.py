@@ -8,6 +8,8 @@ pass its URL, e.g. https://<your-box>-5000.codio.io
 """
 import json
 import sys
+import time
+import urllib.error
 import urllib.request
 
 
@@ -16,8 +18,17 @@ LIMIT = 10
 
 def fetch_page(base_url, page, limit=LIMIT):
     url = f"{base_url}/api/books?page={page}&limit={limit}"
-    with urllib.request.urlopen(url) as response:
-        return json.loads(response.read().decode("utf-8"))
+    while True:
+        try:
+            with urllib.request.urlopen(url) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as error:
+            # The API is rate limited: wait and try again
+            if error.code != 429:
+                raise
+            wait = int(error.headers.get("Retry-After", 60))
+            print(f"Rate limited, waiting {wait} seconds...")
+            time.sleep(wait)
 
 
 def fetch_all_books(base_url):

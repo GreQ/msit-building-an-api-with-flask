@@ -1,7 +1,10 @@
 from flask import Flask, jsonify, request
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 
 app = Flask(__name__)
+limiter = Limiter(app=app, key_func=get_remote_address, headers_enabled=True)
 
 # Our list of books
 books = [
@@ -23,6 +26,7 @@ def validate_book_data(data):
 
 
 @app.route('/api/books', methods=['GET', 'POST'])
+@limiter.limit("10/minute")  # Limit to 10 requests per minute
 def handle_books():
     if request.method == 'POST':
         # Get the new book data from the client
@@ -108,6 +112,11 @@ def not_found_error(error):
 @app.errorhandler(405)
 def method_not_allowed_error(error):
     return jsonify({"error": "Method Not Allowed"}), 405
+
+
+@app.errorhandler(429)
+def rate_limit_error(error):
+    return jsonify({"error": "Too Many Requests"}), 429
 
 
 if __name__ == "__main__":
