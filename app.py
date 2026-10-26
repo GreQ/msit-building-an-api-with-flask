@@ -9,6 +9,12 @@ books = [
     {"id": 2, "title": "1984", "author": "George Orwell"}
 ]
 
+# Add 100 fake books for the pagination exercise
+books += [
+    {"id": i, "title": f"Book {i}", "author": f"Author {i % 10}"}
+    for i in range(3, 103)
+]
+
 
 def validate_book_data(data):
     if "title" not in data or "author" not in data:
@@ -36,12 +42,20 @@ def handle_books():
     else:
         # Handle the GET request
         author = request.args.get('author')
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
 
         if author:
             filtered_books = [book for book in books if book.get('author') == author]
-            return jsonify(filtered_books)
         else:
-            return jsonify(books)
+            filtered_books = books
+
+        start_index = (page - 1) * limit
+        end_index = start_index + limit
+
+        paginated_books = filtered_books[start_index:end_index]
+
+        return jsonify(paginated_books)
 
 
 def find_book_by_id(book_id):
