@@ -30,5 +30,31 @@ def handle_books():
         return jsonify(books)
 
 
+def find_book_by_id(book_id):
+    """ Find the book with the id `book_id`.
+    If there is no book with this id, return None. """
+    for book in books:
+        if book['id'] == book_id:
+            return book
+    return None
+
+
+@app.route('/api/books/<int:id>', methods=['PUT'])
+def handle_book(id):
+    # Find the book with the given ID
+    book = find_book_by_id(id)
+
+    # If the book wasn't found, return a 404 error
+    if book is None:
+        return '', 404
+
+    # Update the book with the new data
+    new_data = request.get_json()
+    book.update(new_data)
+
+    # Return the updated book
+    return jsonify(book)
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
